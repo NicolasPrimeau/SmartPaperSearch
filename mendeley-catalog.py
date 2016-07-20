@@ -1,7 +1,10 @@
+import datetime
 import sys
-from mendeley import Mendeley
+from threading import Thread
+
 import yaml
 import os
+
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.utils.validation import NotFittedError
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -9,11 +12,14 @@ from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import words
 import pickle
 
+import DatabaseDAO
+import auth_fetcher
+
 config_file = 'config/config.yml'
 resources_file = 'config/resources.yml'
 classifier_file = "config/classifier.mdl"
-
-learning_rate = 0.01
+power_threshold = -3
+learning_rate = 0.1
 
 unique = set(words.words())
 
@@ -26,22 +32,36 @@ def get_classifier():
 def get_features(text):
     count_vect = CountVectorizer(analyzer='char_wb', ngram_range=(1, 5), min_df=1,
                                  vocabulary=unique)
-    X_train_counts = count_vect.fit_transform([text])
+    if isinstance(text, list):
+        x_train_counts = count_vect.fit_transform(text)
+    else:
+        x_train_counts = count_vect.fit_transform([text])
     tfidf_transformer = TfidfTransformer()
-    return tfidf_transformer.fit_transform(X_train_counts)
+    return tfidf_transformer.fit_transform(x_train_counts)
 
 
 def clear():
     print(chr(27) + "[2J")
 
 
-def main():
+def startup_learn(classifier):
+    print("Startup Learning...")
+    abstracts = list()
+    interest = list()
+    for article in DatabaseDAO.get_articles():
+        try:
+            abstracts.append(article["abstract"])
+        except KeyError:
+            print(article)
+            sys.exit()
+        interest.append(int(article["interest"]))
+    if len(abstracts) == 0:
+        return
+    classifier.partial_fit(get_features(abstracts), interest, [0, 1])
+    print("Done! Learned on " + str(len(abstracts)) + " documents")
 
-    if os.path.isfile(config_file):
-        with open(config_file) as f:
-            config = yaml.load(f)
-    else:
-        raise ValueError("Need config file")
+
+def main():
 
     if os.path.isfile(resources_file):
         with open(resources_file) as f:
@@ -49,31 +69,42 @@ def main():
     else:
         raise ValueError("Need resources file")
 
+    print("Need Authorization, go logon at http://localhost:5000/!")
+    session = auth_fetcher.get_session_from_cookies()
     clf = load()
+    startup_learn(clf)
+    while iterate(session, clf, resources):
+        pass
 
-    mendeley = Mendeley(config['clientId'], config['clientSecret'])
-    session = mendeley.start_client_credentials_flow().authenticate()
 
-    docs = session.catalog.search(query=resources['query'], view='bib')
-    
+def iterate(session, clf, resources):
+    global power_threshold
+    print("Power Threshold: " + str(power_threshold))
+    clear()
+    query = input("What's the search query? ")
+    clear()
+    docs = session.catalog.search(query=query, view='bib')
     for doc in docs.iter():
         """
         Doc Has:
         id, title, type, source, year, identifies, resources, abstract, link, authors, files
-        pages, volumne, issue, websites, month, publisher, day, city, edition, instituion, series,
-        chapter, revision, accessed, editors
+        pages, volumne, issue, websites, month,     interesting = DatabaseDAO.get_interesting()publisher, day, city,
+        edition, instituion, series, chapter, revision, accessed, editors
         """
-
+        print(str(datetime.datetime.now()) + " -- Searching (" + doc.title + ")")
         if doc.type not in resources['unwanted']:
-            features = get_features(doc.abstract.replace("-\\n", "").replace("- \\n", "").replace("\\n", " "))
+            doc.abstract = doc.abstract.replace("-\\n", "").replace("- \\n", "").replace("\\n", " ")
+            doc.title = doc.title.lower()
+            features = get_features(doc.abstract)
             try:
-                interesting = clf.predict(features)
-                power = clf.decision_function(features)
+                interesting = clf.predict(features)[0]
+                power = clf.decision_function(features)[0]
             except NotFittedError:
                 interesting = None
                 power = None
                 pass
-            if power > -2:
+
+            if power > power_threshold and not DatabaseDAO.contains(article=doc):
                 clear()
                 print("Interest: " + str(interesting) + ", power: " + str(power))
                 print()
@@ -87,19 +118,36 @@ def main():
                 print()
                 print(pretty_format(doc.abstract))
                 print()
-                x = input("Interesting? (y/n) ")
-                if x == "n" or x == '0':
-                    clf.partial_fit(features, [0], [0, 1])
-                elif x == "n" or x == '1':
-                    clf.partial_fit(features, [1], [0, 1])
-                elif x == "q":
-                    save(clf)
-                    break
+                decided = False
+                while not decided:
+                    x = input("Interesting? (y/n) ")
+                    if x == "n" or x == '0':
+                        interest = 0
+                        decided = True
+                    elif x == "y" or x == '1':
+                        interest = 1
+                        decided = True
+                    elif x == "new":
+                        save(clf)
+                        return True
+                    elif x == "set":
+                        command = input("Set Command (Variable=Value) ")
+                        variable, value = command.split("=")
+                        if variable == "power_threshold":
+                            power_threshold = float(value)
+                            print("Set Power Threshold to " + str(power_threshold))
+                    elif x == "q":
+                        save(clf)
+                        return False
                 clear()
+                clf.partial_fit(features, [interest], [0, 1])
+                DatabaseDAO.save_article(doc, interest)
+    return True
 
 
 def save(clf):
     global classifier_file
+    print("Saving Classifier")
     with open(classifier_file, 'wb') as fid:
         pickle.dump(clf, fid)
 
@@ -115,7 +163,6 @@ def load():
 
 
 def pretty_format(line, limit=120):
-    line = line.replace("-\\n", "").replace("\\n", " ")
     lines = list()
     start = 0
     end = limit
@@ -130,4 +177,7 @@ def pretty_format(line, limit=120):
 
 
 if __name__ == "__main__":
-    main()
+    thread = Thread(target=main)
+    thread.start()
+    auth_fetcher.start()
+    thread.join()
