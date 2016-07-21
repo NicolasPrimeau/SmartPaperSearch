@@ -16,6 +16,16 @@ def save_article(article, interest, db_name=DB_NAME):
             }}, upsert=True)
 
 
+def update_article(title, interest, db_name=DB_NAME):
+    with MongoClient() as client:
+        client[db_name][REVIEWED].update(
+            {
+                "title": title
+            }, {"$set": {
+                "interest": interest
+            }}, upsert=True)
+
+
 def get_interesting(db_name=DB_NAME):
     with MongoClient() as client:
         return list(client[db_name][REVIEWED].find({"interest": 1}))

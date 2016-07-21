@@ -74,7 +74,7 @@ def main():
     clf = load()
     startup_learn(clf)
     while iterate(session, clf, resources):
-        pass
+        save(clf)
 
 
 def iterate(session, clf, resources):
@@ -119,7 +119,8 @@ def iterate(session, clf, resources):
                 print(pretty_format(doc.abstract))
                 print()
                 decided = False
-                while not decided:
+                skip = False
+                while not decided and not skip:
                     x = input("Interesting? (y/n) ")
                     if x == "n" or x == '0':
                         interest = 0
@@ -128,20 +129,23 @@ def iterate(session, clf, resources):
                         interest = 1
                         decided = True
                     elif x == "new":
-                        save(clf)
                         return True
+                    elif x == "s":
+                        skip = True
+                        break
                     elif x == "set":
                         command = input("Set Command (Variable=Value) ")
                         variable, value = command.split("=")
                         if variable == "power_threshold":
                             power_threshold = float(value)
                             print("Set Power Threshold to " + str(power_threshold))
+                        decided = False
                     elif x == "q":
-                        save(clf)
                         return False
                 clear()
-                clf.partial_fit(features, [interest], [0, 1])
-                DatabaseDAO.save_article(doc, interest)
+                if not skip:
+                    clf.partial_fit(features, [interest], [0, 1])
+                    DatabaseDAO.save_article(doc, interest)
     return True
 
 
