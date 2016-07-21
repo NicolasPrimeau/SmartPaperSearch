@@ -8,6 +8,6 @@ if len(sys.argv) < 3:
     sys.exit(0)
 
 title = sys.argv[1].lower()
-interest = float(sys.arvp[2])
+interest = float(sys.argv[2])
 
-DatabaseDAO.update(title, interest)
+DatabaseDAO.update_article(title, interest)
