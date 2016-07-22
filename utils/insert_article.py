@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
-import sys
+if __name__ == '__main__' and __package__ is None:
+    import os
+    # __file__ should be defined in this case
+    PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.sys.path.append(PARENT_DIR)
 
-import DatabaseDAO
+from utils import DatabaseDAO
+import sys
 
 if len(sys.argv) != 4:
     print("3 Arguments, in this order: title, interest, abstract")

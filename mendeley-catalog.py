@@ -1,23 +1,23 @@
 import datetime
+import os
+import pickle
 import sys
 from threading import Thread
 
 import yaml
-import os
-
+from mendeley.exception import MendeleyApiException
+from nltk.corpus import words
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.utils.validation import NotFittedError
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.feature_extraction.text import CountVectorizer
-from nltk.corpus import words
-import pickle
 
-import DatabaseDAO
 import auth_fetcher
+from utils import DatabaseDAO
 
 resources_file = 'resources/config/resources.yml'
 classifier_file = "resources/config/classifier.mdl"
-power_threshold = -3
+power_threshold = -500
 learning_rate = 0.1
 
 unique = set(words.words())
@@ -32,9 +32,9 @@ def get_features(text):
     count_vect = CountVectorizer(analyzer='char_wb', ngram_range=(1, 5), min_df=1,
                                  vocabulary=unique)
     if isinstance(text, list):
-        x_train_counts = count_vect.fit_transform(text)
+        x_train_counts = count_vect.fit_transform([abstract.lower() for abstract in text])
     else:
-        x_train_counts = count_vect.fit_transform([text])
+        x_train_counts = count_vect.fit_transform([text.lower()])
     tfidf_transformer = TfidfTransformer()
     return tfidf_transformer.fit_transform(x_train_counts)
 
@@ -71,7 +71,13 @@ def main():
     session = auth_fetcher.get_session_from_cookies()
     clf = load()
     startup_learn(clf)
-    while iterate(session, clf, resources):
+    cont = True
+    while cont:
+        try:
+            cont = iterate(session, clf, resources)
+        except MendeleyApiException:
+            print("Need New Authorization, please restart")
+            cont = False
         save(clf)
 
 
