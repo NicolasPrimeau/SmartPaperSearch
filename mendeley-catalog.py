@@ -81,14 +81,41 @@ def main():
         save(clf)
 
 
+def get_documents(session):
+    clear()
+    x = ""
+    while x != "b" and x != "a":
+        x = input("Query type, Basic of Advanced? (b/a)? ")
+
+    print()
+    if x == "a":
+        print("Enter comma separated key-value pairs")
+        print("Available keys are title, author, source, abstract")
+        print()
+        print("For Example: title = search these in the title, " +
+              "authors = Bender Rodriguez, abstract = very important words, ...")
+        print()
+        query = input("Query: ")
+        parsed = dict()
+        for pair in query.split(","):
+            variable, value = pair.split("=")
+            variable = variable.strip()
+            value = value.strip()
+            parsed[variable] = value
+        docs = session.catalog.advanced_search(**parsed)
+    elif x == "b":
+        query = input("What's the search query? ")
+        docs = session.catalog.search(query=query, view='bib')
+    else:
+        raise ValueError("Impossible to get here")
+
+    clear()
+    return docs
+
+
 def iterate(session, clf, resources):
     global power_threshold
-    print("Power Threshold: " + str(power_threshold))
-    clear()
-    query = input("What's the search query? ")
-    clear()
-    docs = session.catalog.search(query=query, view='bib')
-    for doc in docs.iter():
+    for doc in get_documents(session).iter():
         """
         Doc Has:
         id, title, type, source, year, identifies, resources, abstract, link, authors, files
