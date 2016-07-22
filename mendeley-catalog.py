@@ -15,9 +15,8 @@ import pickle
 import DatabaseDAO
 import auth_fetcher
 
-config_file = 'config/config.yml'
-resources_file = 'config/resources.yml'
-classifier_file = "config/classifier.mdl"
+resources_file = 'resources/config/resources.yml'
+classifier_file = "resources/config/classifier.mdl"
 power_threshold = -3
 learning_rate = 0.1
 
@@ -62,7 +61,6 @@ def startup_learn(classifier):
 
 
 def main():
-
     if os.path.isfile(resources_file):
         with open(resources_file) as f:
             resources = yaml.load(f)

@@ -1,7 +1,0 @@
-
-rm -r ../config/data/*
-mongodump --db MendeleyAutoScrape -o ../config/data
-tar -zcvf state.tar.gz ../config/
-mv state.tar.gz ../config/archive
-
-

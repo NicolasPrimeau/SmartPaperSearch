@@ -1,0 +1,8 @@
+
+rm -r ../resources/config/data/*
+mongodump --db MendeleyAutoScrape -o ../resources/config/data
+tar -zcvf state.tar.gz ../resources/config/
+mkdir -p ../resources/archive
+mv state.tar.gz ../resources/archive
+
+

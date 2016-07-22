@@ -1,0 +1,5 @@
+rm -r ../resources/config
+tar -xvf ../resources/archive/state.tar.gz -C ../resources
+mv ../resources/resources/config ../resources
+rm -r ../resources/resources
+mongorestore --db MendeleyAutoScrape ../resources/config/data/MendeleyAutoScrape/

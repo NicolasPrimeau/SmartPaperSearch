@@ -16,6 +16,18 @@ def save_article(article, interest, db_name=DB_NAME):
             }}, upsert=True)
 
 
+def save_article_full(title, abstract, interest, db_name=DB_NAME):
+    with MongoClient() as client:
+        client[db_name][REVIEWED].update(
+            {
+                "title": title
+            }, {"$set": {
+                "title": title,
+                "abstract": abstract,
+                "interest": interest
+            }}, upsert=True)
+
+
 def update_article(title, interest, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
@@ -23,7 +35,7 @@ def update_article(title, interest, db_name=DB_NAME):
                 "title": title
             }, {"$set": {
                 "interest": interest
-            }}, upsert=True)
+            }})
 
 
 def get_interesting(db_name=DB_NAME):

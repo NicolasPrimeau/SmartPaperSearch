@@ -1,13 +1,18 @@
 import time
 from flask import Flask, render_template, request, session
 import yaml
+import os
 
 from mendeley import Mendeley
 from mendeley.session import MendeleySession
 
+config_file = 'resources/config/config.yml'
 
-with open('config/config.yml') as f:
-    config = yaml.load(f)
+if os.path.isfile(config_file):
+    with open(config_file) as f:
+        config = yaml.load(f)
+else:
+    raise ValueError("Need resources file")
 
 REDIRECT_URI = 'http://localhost:5000/oauth'
 
