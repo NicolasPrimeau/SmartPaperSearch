@@ -85,7 +85,7 @@ def get_documents(session):
     clear()
     x = ""
     while x != "b" and x != "a":
-        x = input("Query type, Basic of Advanced? (b/a)? ")
+        x = input("Query type, Basic or Advanced? (b/a)? ")
 
     print()
     if x == "a":

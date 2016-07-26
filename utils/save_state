@@ -1,4 +1,4 @@
-
+rm ../resources/archive/*
 rm -r ../resources/config/data/*
 mongodump --db MendeleyAutoScrape -o ../resources/config/data
 tar -zcvf state.tar.gz ../resources/config/

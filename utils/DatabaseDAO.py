@@ -8,9 +8,9 @@ def save_article(article, interest, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": article.title
+                "title": article.title.strip()
             }, {"$set": {
-                "title": article.title,
+                "title": article.title.strip(),
                 "abstract": article.abstract,
                 "interest": interest
             }}, upsert=True)
@@ -20,9 +20,9 @@ def save_article_full(title, abstract, interest, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": title
+                "title": title.strip()
             }, {"$set": {
-                "title": title,
+                "title": title.strip(),
                 "abstract": abstract,
                 "interest": interest
             }}, upsert=True)
@@ -32,7 +32,7 @@ def update_article(title, interest, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": title
+                "title": title.strip()
             }, {"$set": {
                 "interest": interest
             }})
@@ -69,7 +69,7 @@ def repair(db_name=DB_NAME):
                     {
                         "title": article["title"]
                     }, {"$set": {
-                        "title": article["title"].lower(),
+                        "title": article["title"].lower().strip(),
                         "abstract": article["abstract"],
                         "interest": article["interest"]
                     }}, upsert=True)
