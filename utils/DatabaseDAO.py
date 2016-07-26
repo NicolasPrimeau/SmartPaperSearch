@@ -53,9 +53,13 @@ def get_articles(db_name=DB_NAME):
 
 
 def get_article(article, db_name=DB_NAME):
+    return get_article_full(article.title, db_name=db_name)
+
+
+def get_article_full(title, db_name=DB_NAME):
     with MongoClient() as client:
         return client[db_name][REVIEWED].find_one({
-            "title": article.title
+            "title": title.lower()
         })
 
 

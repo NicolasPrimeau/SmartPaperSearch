@@ -78,6 +78,9 @@ def main():
         except MendeleyApiException:
             print("Need New Authorization, please restart")
             cont = False
+        except Exception:
+            print("Received exception, please restart")
+            cont = False
         save(clf)
 
 
