@@ -1,7 +1,20 @@
+import os
+
+import yaml
 
 from utils import DatabaseDAO
 
-CATEGORIES = []
+resources_file = 'resources/config/categories.yml'
+
+if os.path.isfile(resources_file):
+    with open(resources_file) as f:
+        try:
+            CATEGORIES = yaml.load(f)["categories"]
+        except KeyError:
+            print("Category file is not correct")
+
+else:
+    raise ValueError("Need categories file")
 
 
 def setup():

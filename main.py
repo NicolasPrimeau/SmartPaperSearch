@@ -20,6 +20,12 @@ classifier_file = "resources/config/classifier.mdl"
 power_threshold = -500
 learning_rate = 0.1
 
+if os.path.isfile(resources_file):
+    with open(resources_file) as f:
+        resources = yaml.load(f)
+else:
+    raise ValueError("Need resources file")
+
 unique = set(words.words())
 
 
@@ -61,11 +67,7 @@ def startup_learn(classifier):
 
 
 def main():
-    if os.path.isfile(resources_file):
-        with open(resources_file) as f:
-            resources = yaml.load(f)
-    else:
-        raise ValueError("Need resources file")
+    global resources
 
     print("Need Authorization, go logon at http://localhost:5000/!")
     session = auth_fetcher.get_session_from_cookies()
