@@ -2,6 +2,41 @@ from pymongo import MongoClient
 
 DB_NAME = "MendeleyAutoScrape"
 REVIEWED = "articles"
+CATEGORIES = "categories"
+
+
+def get_categories(db_name=DB_NAME):
+    with MongoClient() as client:
+        return list(client[db_name][CATEGORIES].find())
+
+
+def insert_category(name, db_name=DB_NAME):
+    with MongoClient() as client:
+        ident = client[db_name][CATEGORIES].count()
+        if client[db_name][CATEGORIES].find_one({"identity": ident}) is not None:
+            print("Category Database Corrupted, non unique ids! Please Fix!")
+            return
+        elif client[db_name][CATEGORIES].find_one({"name": name}) is not None:
+            print("Can not add identical category")
+            return
+        client[db_name][CATEGORIES].insert_one({
+            "name": name,
+            "identity": ident
+        })
+
+
+def categorize_article(article, categories, db_name=DB_NAME):
+    if isinstance(categories, list):
+        categories = ",".join(categories)
+
+    with MongoClient() as client:
+        client[db_name][REVIEWED].update(
+            {
+                "title": article.title.strip()
+            }, {"$set": {
+                "title": article.title.strip(),
+                "category": categories
+            }})
 
 
 def save_article(article, interest, db_name=DB_NAME):
