@@ -4,7 +4,7 @@ import yaml
 
 from utils import DatabaseDAO
 
-resources_file = 'resources/config/categories.yml'
+resources_file = 'resources/config/resources.yml'
 
 if os.path.isfile(resources_file):
     with open(resources_file) as f:
