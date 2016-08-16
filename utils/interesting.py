@@ -11,10 +11,11 @@ import sys
 
 full = len(sys.argv) == 2 and sys.argv[1] == "full"
 
+
 def main():
     cnt = 0
     for article in DatabaseDAO.get_interesting():
-        print(str(cnt) + " -- " + article["title"])
+        print(str(cnt) + " -- " + article["title"] + " " + str(article["category"]))
         print()
         if full:
             print("Interest: " + str(article["interest"]))

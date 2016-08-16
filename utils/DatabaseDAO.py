@@ -32,9 +32,9 @@ def categorize_article(article, categories, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": article.title.strip()
+                "title": article["title"].strip()
             }, {"$set": {
-                "title": article.title.strip(),
+                "title": article["title"].strip(),
                 "category": categories
             }})
 
@@ -46,7 +46,7 @@ def save_article(article, interest, db_name=DB_NAME):
                 "title": article.title.strip()
             }, {"$set": {
                 "title": article.title.strip(),
-                "abstract": article.abstract,
+                "abstract": prep_abstract(article.abstract),
                 "interest": interest
             }}, upsert=True)
 
@@ -58,7 +58,7 @@ def save_article_full(title, abstract, interest, db_name=DB_NAME):
                 "title": title.strip()
             }, {"$set": {
                 "title": title.strip(),
-                "abstract": abstract,
+                "abstract": prep_abstract(abstract),
                 "interest": interest
             }}, upsert=True)
 
@@ -98,10 +98,14 @@ def get_article_full(title, db_name=DB_NAME):
         })
 
 
+def prep_abstract(abstract):
+    return abstract.replace("-\\n", "").replace("- \\n", "").replace("\\n", " ")
+
+
 def repair(db_name=DB_NAME):
     with MongoClient() as client:
-        articles = get_articles()
-        for article in articles:
+        for article in client[db_name][REVIEWED].find():
+            article["abstract"] = article["abstract"].replace("-\\n", "").replace("- \\n", "").replace("\\n", " ")
             if client[db_name][REVIEWED].find({"title": article["title"]}).count() > 1:
                 client[db_name][REVIEWED].remove({"title": article["title"]})
                 client[db_name][REVIEWED].update(
@@ -112,7 +116,25 @@ def repair(db_name=DB_NAME):
                         "abstract": article["abstract"],
                         "interest": article["interest"]
                     }}, upsert=True)
-
+            elif "category" in article:
+                client[db_name][REVIEWED].update(
+                    {
+                        "title": article["title"]
+                    }, {"$set": {
+                        "title": article["title"].lower().strip(),
+                        "abstract": prep_abstract(article["abstract"]),
+                        "interest": article["interest"],
+                        "category": article["category"].split(",")
+                    }}, upsert=False)
+            else:
+                client[db_name][REVIEWED].update(
+                    {
+                        "title": article["title"]
+                    }, {"$set": {
+                        "title": article["title"].lower().strip(),
+                        "abstract": prep_abstract(article["abstract"]),
+                        "interest": article["interest"]
+                    }}, upsert=False)
 
 if __name__ == "__main__":
     repair()
