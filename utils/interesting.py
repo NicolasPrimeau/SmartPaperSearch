@@ -13,13 +13,15 @@ full = len(sys.argv) == 2 and sys.argv[1] == "full"
 
 
 def main():
+    categories = DatabaseDAO.get_categories()
+    categories = {str(int(x["identity"])): x["name"] for x in categories}
     cnt = 0
     for article in DatabaseDAO.get_interesting():
-        print(str(cnt) + " -- " + article["title"] + " " + str(article["category"]))
+        print(str(cnt) + " -- " + article["title"] + " ")
+        print()
+        print("Categories: " + ",".join([categories[str(i)] for i in article["category"]]))
         print()
         if full:
-            print("Interest: " + str(article["interest"]))
-            print()
             print(article["abstract"])
             print()
 

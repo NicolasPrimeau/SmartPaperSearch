@@ -16,9 +16,12 @@ if len(sys.argv) != 4:
 title = sys.argv[1].lower()
 interest = int(sys.argv[2])
 abstract = sys.argv[3]
+category = None
+if len(sys.argv) == 5:
+    category = sys.argv[4].split(",")
 
 if interest not in (0, 1):
     print("Interest must be 0 or 1")
     sys.exit()
 
-DatabaseDAO.save_article_full(title, abstract, interest)
+DatabaseDAO.save_article_full(title, abstract, interest, category)

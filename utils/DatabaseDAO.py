@@ -58,16 +58,27 @@ def save_article(article, interest, db_name=DB_NAME):
             }}, upsert=True)
 
 
-def save_article_full(title, abstract, interest, db_name=DB_NAME):
+def save_article_full(title, abstract, interest, category=None, db_name=DB_NAME):
     with MongoClient() as client:
-        client[db_name][REVIEWED].update(
-            {
-                "title": cleans_title(title)
-            }, {"$set": {
-                "title": cleans_title(title),
-                "abstract": prep_abstract(abstract),
-                "interest": interest
-            }}, upsert=True)
+        if category is None:
+            client[db_name][REVIEWED].update(
+                {
+                    "title": cleans_title(title)
+                }, {"$set": {
+                    "title": cleans_title(title),
+                    "abstract": prep_abstract(abstract),
+                    "interest": interest
+                }}, upsert=True)
+        else:
+            client[db_name][REVIEWED].update(
+                {
+                    "title": cleans_title(title)
+                }, {"$set": {
+                    "title": cleans_title(title),
+                    "abstract": prep_abstract(abstract),
+                    "interest": interest,
+                    "category": category
+                }}, upsert=True)
 
 
 def update_article(title, interest, db_name=DB_NAME):
