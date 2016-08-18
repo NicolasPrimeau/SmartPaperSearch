@@ -26,9 +26,6 @@ def insert_category(name, db_name=DB_NAME):
 
 
 def categorize_article(article, categories, db_name=DB_NAME):
-    if isinstance(categories, list):
-        categories = ",".join(categories)
-
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
@@ -117,6 +114,8 @@ def repair(db_name=DB_NAME):
                         "interest": article["interest"]
                     }}, upsert=True)
             elif "category" in article:
+                if not isinstance(article["category"], list):
+                    article["category"] = article["category"].split(",")
                 client[db_name][REVIEWED].update(
                     {
                         "title": article["title"]
@@ -124,7 +123,7 @@ def repair(db_name=DB_NAME):
                         "title": article["title"].lower().strip(),
                         "abstract": prep_abstract(article["abstract"]),
                         "interest": article["interest"],
-                        "category": article["category"].split(",")
+                        "category": article["category"]
                     }}, upsert=False)
             else:
                 client[db_name][REVIEWED].update(
