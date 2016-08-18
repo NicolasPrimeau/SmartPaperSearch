@@ -65,7 +65,5 @@ def main():
                 else:
                     print("One of those is not a valid category")
 
-
-
 if __name__ == "__main__":
     main()
