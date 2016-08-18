@@ -5,6 +5,16 @@ REVIEWED = "articles"
 CATEGORIES = "categories"
 
 
+def reset_category(article, db_name=DB_NAME):
+    with MongoClient() as client:
+        client[db_name][REVIEWED].update(
+            {
+                "title": cleans_title(article["title"])
+            }, {"$unset": {
+                "category": 1
+            }})
+
+
 def get_categories(db_name=DB_NAME):
     with MongoClient() as client:
         return list(client[db_name][CATEGORIES].find())
@@ -32,9 +42,9 @@ def categorize_article(article, categories, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": article["title"].strip()
+                "title": cleans_title(article["title"])
             }, {"$set": {
-                "title": article["title"].strip(),
+                "title": cleans_title(article["title"]),
                 "category": categories
             }})
 
@@ -43,9 +53,9 @@ def save_article(article, interest, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": article.title.strip()
+                "title": cleans_title(article.title)
             }, {"$set": {
-                "title": article.title.strip(),
+                "title": cleans_title(article.title),
                 "abstract": prep_abstract(article.abstract),
                 "interest": interest
             }}, upsert=True)
@@ -55,9 +65,9 @@ def save_article_full(title, abstract, interest, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": title.strip()
+                "title": cleans_title(title)
             }, {"$set": {
-                "title": title.strip(),
+                "title": cleans_title(title),
                 "abstract": prep_abstract(abstract),
                 "interest": interest
             }}, upsert=True)
@@ -67,7 +77,7 @@ def update_article(title, interest, db_name=DB_NAME):
     with MongoClient() as client:
         client[db_name][REVIEWED].update(
             {
-                "title": title.strip()
+                "title": cleans_title(title)
             }, {"$set": {
                 "interest": interest
             }})
@@ -94,12 +104,16 @@ def get_article(article, db_name=DB_NAME):
 def get_article_full(title, db_name=DB_NAME):
     with MongoClient() as client:
         return client[db_name][REVIEWED].find_one({
-            "title": title.lower()
+            "title": cleans_title(title.lower())
         })
 
 
 def prep_abstract(abstract):
     return abstract.replace("-\\n", "").replace("- \\n", "").replace("\\n", " ")
+
+
+def cleans_title(title):
+    return title.lower().strip()
 
 
 def repair(db_name=DB_NAME):
@@ -110,18 +124,18 @@ def repair(db_name=DB_NAME):
                 client[db_name][REVIEWED].remove({"title": article["title"]})
                 client[db_name][REVIEWED].update(
                     {
-                        "title": article["title"]
+                        "title": cleans_title(article["title"])
                     }, {"$set": {
-                        "title": article["title"].lower().strip(),
+                        "title": cleans_title(article["title"]),
                         "abstract": article["abstract"],
                         "interest": article["interest"]
                     }}, upsert=True)
             elif "category" in article:
                 client[db_name][REVIEWED].update(
                     {
-                        "title": article["title"]
+                        "title": cleans_title(article["title"])
                     }, {"$set": {
-                        "title": article["title"].lower().strip(),
+                        "title": cleans_title(article["title"]),
                         "abstract": prep_abstract(article["abstract"]),
                         "interest": article["interest"],
                         "category": article["category"].split(",")
@@ -129,9 +143,9 @@ def repair(db_name=DB_NAME):
             else:
                 client[db_name][REVIEWED].update(
                     {
-                        "title": article["title"]
+                        "title": cleans_title(article["title"])
                     }, {"$set": {
-                        "title": article["title"].lower().strip(),
+                        "title": cleans_title(article["title"]),
                         "abstract": prep_abstract(article["abstract"]),
                         "interest": article["interest"]
                     }}, upsert=False)
