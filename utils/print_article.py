@@ -18,6 +18,8 @@ title = sys.argv[1]
 article = DatabaseDAO.get_article_full(title)
 print(article["title"])
 print()
+print("Category: " + str(article["category"]))
+print()
 print("Interest: " + str(article["interest"]))
 print()
 print(article["abstract"])
